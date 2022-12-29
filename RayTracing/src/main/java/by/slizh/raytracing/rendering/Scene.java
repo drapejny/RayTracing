@@ -1,6 +1,9 @@
 package by.slizh.raytracing.rendering;
 
 import by.slizh.raytracing.entity.Solid;
+import by.slizh.raytracing.math.Ray;
+import by.slizh.raytracing.math.RayHit;
+import by.slizh.raytracing.math.Vector3;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +26,6 @@ public class Scene {
         this.camera = camera;
     }
 
-    //// TODO: 28.12.2022 убрать геттеры и сеттеры для списка солидов
     public List<Solid> getSolids() {
         return solids;
     }
@@ -38,5 +40,17 @@ public class Scene {
 
     public void clearSolids() {
         solids.clear();
+    }
+
+    public RayHit calculateRayHit(Ray ray) {
+        RayHit rayHit = null;
+        for (Solid solid : solids) {
+            Vector3 intersection = solid.calculateIntersection(ray);
+            if (intersection != null &&
+                    (rayHit == null || Vector3.distance(rayHit.getHitPosition(), ray.getOrigin()) > Vector3.distance(intersection, ray.getOrigin()))) {
+                rayHit = new RayHit(intersection, ray, solid.calculateNormal(ray), solid);
+            }
+        }
+        return rayHit;
     }
 }

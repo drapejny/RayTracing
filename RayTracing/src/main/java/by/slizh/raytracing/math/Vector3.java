@@ -58,13 +58,10 @@ public class Vector3 {
     }
 
     public Vector3 rotate(float pitch, float yaw) {
-        //// TODO: 28.12.2022 может быть стоит удалить нормализацию в будущем
-        Vector3 normalizedVector = normalize(this);
-
-        float newY = (float) (normalizedVector.y * Math.cos(pitch) - normalizedVector.z * Math.sin(pitch));
-        float newZ = (float) (normalizedVector.y * Math.sin(pitch) + normalizedVector.z * Math.cos(pitch));
-        float newX = (float) (normalizedVector.x * Math.cos(yaw) + newZ * Math.sin(yaw));
-        newZ = (float) (-normalizedVector.x * Math.sin(yaw) + newZ * Math.cos(yaw));
+        float newY = (float) (y * Math.cos(pitch) - z * Math.sin(pitch));
+        float newZ = (float) (y * Math.sin(pitch) + z * Math.cos(pitch));
+        float newX = (float) (x * Math.cos(yaw) + newZ * Math.sin(yaw));
+        newZ = (float) (-x * Math.sin(yaw) + newZ * Math.cos(yaw));
 
         return new Vector3(newX, newY, newZ);
 
@@ -77,6 +74,10 @@ public class Vector3 {
 
     public static float dotProduct(Vector3 v1, Vector3 v2) {
         return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+    }
+
+    public static float distance(Vector3 v1, Vector3 v2){
+        return (float) Math.sqrt(Math.pow(v1.x - v2.x, 2) + Math.pow(v1.y - v2.y, 2) + Math.pow(v1.z - v2.z, 2));
     }
 
 

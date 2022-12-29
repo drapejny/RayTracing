@@ -21,7 +21,7 @@ public class ViewPort extends JPanel {
 
     private boolean cameraCursorMoveFlag = false;
 
-    private Vector3 light = new Vector3(0.0f, 1.0f, 0.0f);
+    private Vector3 lightPoint = new Vector3(1000f, 2000f, 1000f);
 
     public ViewPort(JFrame container) {
         setFocusable(true);
@@ -39,18 +39,28 @@ public class ViewPort extends JPanel {
             @Override
             public void keyPressed(KeyEvent e) {
                 Camera camera = scene.getCamera();
+                float pitch = camera.getPitch();
+                float yaw = camera.getYaw();
+
                 switch (e.getKeyCode()) {
-                    case KeyEvent.VK_D -> camera.setPosition(camera.getPosition().add(new Vector3(0.02f, 0.0f, 0.0f)));
-                    case KeyEvent.VK_A -> camera.setPosition(camera.getPosition().add(new Vector3(-0.02f, 0.0f, 0.0f)));
-                    case KeyEvent.VK_W -> camera.setPosition(camera.getPosition().add(new Vector3(0.0f, 0.0f, 1.0f)));
-                    case KeyEvent.VK_S -> camera.setPosition(camera.getPosition().add(new Vector3(0.0f, 0.0f, -1.0f)));
-                    case KeyEvent.VK_SPACE -> camera.setPosition(camera.getPosition().add(new Vector3(0.0f, 0.02f, 0.0f)));
-                    case KeyEvent.VK_SHIFT ->
-                            camera.setPosition(camera.getPosition().add(new Vector3(0.0f, -0.02f, 0.0f)));
-                    //case KeyEvent.VK_UP -> camera.setPitch(camera.getPitch() + 0.0001f);
-                    //case KeyEvent.VK_DOWN -> camera.setPitch(camera.getPitch() - 0.0001f);
+                    case KeyEvent.VK_D ->
+                            camera.setPosition(camera.getPosition().add(new Vector3(0.05f, 0.0f, 0.0f).rotate(pitch, yaw)));
+                    case KeyEvent.VK_A ->
+                            camera.setPosition(camera.getPosition().add(new Vector3(-0.05f, 0.0f, 0.0f).rotate(pitch, yaw)));
+                    case KeyEvent.VK_W -> {
+                        Vector3 moveVector = new Vector3(0.0f, 0.0f, 0.05f).rotate(pitch, yaw);
+                        moveVector.setY(0.0f);
+                        camera.setPosition(camera.getPosition().add(moveVector));
+                    }
+                    case KeyEvent.VK_S ->{
+                        Vector3 moveVector = new Vector3(0.0f, 0.0f, -0.05f).rotate(pitch, yaw);
+                        moveVector.setY(0.0f);
+                        camera.setPosition(camera.getPosition().add(moveVector));
+                    }
+                    case KeyEvent.VK_E -> camera.setPosition(camera.getPosition().add(new Vector3(0.0f, 0.2f, 0.0f)));
+                    case KeyEvent.VK_Q -> camera.setPosition(camera.getPosition().add(new Vector3(0.0f, -0.2f, 0.0f)));
                 }
-                System.out.println("Pitch " + camera.getPitch() + "Yaw " + camera.getYaw());
+
                 repaint();
             }
         });
@@ -62,7 +72,7 @@ public class ViewPort extends JPanel {
                 if (cameraCursorMoveFlag) {
 
                     // Coefficient to convert integer mouse movements to radians
-                    final float TO_RADIANS_COEF = (float) Math.PI / 500000;
+                    final float TO_RADIANS_COEF = (float) Math.PI / 5000;
 
                     int centerX = frame.getX() + frame.getWidth() / 2;
                     int centerY = frame.getY() + frame.getHeight() / 2;
@@ -78,7 +88,6 @@ public class ViewPort extends JPanel {
                         camera.setPitch(Math.min((float) Math.PI / 2,
                                 Math.max((float) (-Math.PI / 2), camera.getPitch() + mouseYOffset * TO_RADIANS_COEF)));
                         camera.setYaw(camera.getYaw() + mouseXOffset * TO_RADIANS_COEF);
-                        System.out.println("Pitch " + camera.getPitch() + "Yaw " + camera.getYaw());
                         //camera.setPitch(Math.min(90, Math.max(-90, camera.getPitch() + mouseYOffset)));
                         //camera.setYaw(camera.getYaw() + mouseXOffset);
                         repaint();
@@ -100,11 +109,23 @@ public class ViewPort extends JPanel {
         });
 
         frame = container;
-        scene = new Scene();
+        scene = new
 
-        scene.addSolid(new Sphere(new Vector3(-1, 0, 10), Color.RED, 0.4f));
-        scene.addSolid(new Sphere(new Vector3(0, 0, 20), Color.GREEN, 0.4f));
-        scene.addSolid(new Sphere(new Vector3(1, 0, 50), Color.BLUE, 0.4f));
+                Scene();
+
+//        scene.addSolid(new Sphere(new Vector3(-1, 0, 1), Color.RED, 0.4f));
+//        scene.addSolid(new Sphere(new Vector3(0, 0, 2), Color.GREEN, 0.4f));
+//        scene.addSolid(new Sphere(new Vector3(1, 0, 3), Color.BLUE, 0.4f));
+
+        scene.addSolid(new
+
+                Sphere(new Vector3(0, 0, 1), Color.RED, 0.4f));
+        scene.addSolid(new
+
+                Sphere(new Vector3(0, 0, 2), Color.GREEN, 0.4f));
+        scene.addSolid(new
+
+                Sphere(new Vector3(0, 0, 3), Color.BLUE, 0.4f));
 
     }
 
@@ -132,22 +153,33 @@ public class ViewPort extends JPanel {
                 Ray ray = new Ray(eyePos.add(camera.getPosition()), rayDir);
                 //System.out.println(ray);
                 //Ray ray = new Ray(new Vector3(u, v, 0.0f), new Vector3(0.0f, 0.0f, 1.0f));
-                for (Solid solid : scene.getSolids()) {
-                    Vector3 intersection = solid.calculateIntersection(ray);
-                    if (intersection != null) {
-                        Vector3 normal = solid.calculateNormal(ray);
-                        RayHit rayHit = new RayHit(intersection, ray, normal, solid);
-                        float cos = Vector3.dotProduct(rayHit.getNormal(), light);
-                        float coef = Math.max(cos, 0.0f);
-                        Color color = new Color((int) (solid.getColor().getRed() * coef),
-                                (int) (solid.getColor().getBlue() * coef),
-                                (int) (solid.getColor().getGreen() * coef));
-                        g.setColor(color);
-                        g.fillRect(x, y, blockSize, blockSize);
-                    }
+                RayHit rayHit = scene.calculateRayHit(ray);
+                if (rayHit != null) {
+                    //Vector3 lightVector = Vector3.normalize(lightPoint.subtract(rayHit.getHitPosition())).rotate(-camera.getPitch(),-camera.getYaw());
+                    Vector3 lightVector = Vector3.normalize(lightPoint.subtract(rayHit.getHitPosition()));
+                    float cos = Vector3.dotProduct(rayHit.getNormal(), lightVector);
+                    float coef = Math.max(cos, 0.0f);
+                    Color color = new Color((int) (rayHit.getSolid().getColor().getRed() * coef),
+                            (int) (rayHit.getSolid().getColor().getBlue() * coef),
+                            (int) (rayHit.getSolid().getColor().getGreen() * coef));
+                    g.setColor(color);
+                    g.fillRect(x, y, blockSize, blockSize);
                 }
+//                for (Solid solid : scene.getSolids()) {
+//                    Vector3 intersection = solid.calculateIntersection(ray);
+//                    if (intersection != null) {
+//                        Vector3 normal = solid.calculateNormal(ray);
+//                        RayHit rayHit = new RayHit(intersection, ray, normal, solid);
+//                        float cos = Vector3.dotProduct(rayHit.getNormal(), lightVector);
+//                        float coef = Math.max(cos, 0.0f);
+//                        Color color = new Color((int) (solid.getColor().getRed() * coef),
+//                                (int) (solid.getColor().getBlue() * coef),
+//                                (int) (solid.getColor().getGreen() * coef));
+//                        g.setColor(color);
+//                        g.fillRect(x, y, blockSize, blockSize);
+//                    }
+//                }
             }
         }
-
     }
 }

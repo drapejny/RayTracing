@@ -13,7 +13,7 @@ public class Camera {
         this.position = new Vector3(0.0f, 0.0f, 0.0f);
         this.yaw = 0.0f;
         this.pitch = 0.0f;
-        this.fieldOfVision = (float) Math.PI / 3;
+        this.fieldOfVision = (float)60;
     }
 
     public Vector3 getPosition() {
