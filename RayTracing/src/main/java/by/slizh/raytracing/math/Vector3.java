@@ -64,7 +64,12 @@ public class Vector3 {
         newZ = (float) (-x * Math.sin(yaw) + newZ * Math.cos(yaw));
 
         return new Vector3(newX, newY, newZ);
+    }
 
+    public boolean inArea(Vector3 vector3, float radius) {
+        return vector3.x < x + radius && vector3.x > x - radius
+                && vector3.y < y + radius && vector3.y > y - radius
+                && vector3.z < z + radius && vector3.z > z - radius;
     }
 
     public static Vector3 normalize(Vector3 vector3) {
@@ -76,8 +81,21 @@ public class Vector3 {
         return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
     }
 
-    public static float distance(Vector3 v1, Vector3 v2){
+    public static float distance(Vector3 v1, Vector3 v2) {
         return (float) Math.sqrt(Math.pow(v1.x - v2.x, 2) + Math.pow(v1.y - v2.y, 2) + Math.pow(v1.z - v2.z, 2));
+    }
+
+    public static Vector3 reflect(Vector3 vector, Vector3 normal) {
+        float dot = dotProduct(vector, normal);
+        float tempX = normal.x * dot * 2.0f;
+        float tempY = normal.y * dot * 2.0f;
+        float tempZ = normal.z * dot * 2.0f;
+        Vector3 reflectVector = new Vector3(tempX - vector.x, tempY - vector.y, tempZ - vector.z);
+        return reflectVector;
+    }
+
+    public static Vector3 inverse(Vector3 vector3) {
+        return new Vector3(-vector3.x, -vector3.y, -vector3.z);
     }
 
 
