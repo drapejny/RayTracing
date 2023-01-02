@@ -10,8 +10,8 @@ public class Sphere extends Solid {
 
     private float radius;
 
-    public Sphere(Vector3 position, Color color, float radius) {
-        super(position, color);
+    public Sphere(Vector3 position, Color color, float radius, float reflectivity) {
+        super(position, color, reflectivity);
         this.radius = radius;
     }
 
