@@ -1,5 +1,6 @@
 package by.slizh.raytracing.frame;
 
+import by.slizh.raytracing.entity.Plane;
 import by.slizh.raytracing.entity.Solid;
 import by.slizh.raytracing.entity.Sphere;
 import by.slizh.raytracing.math.Ray;
@@ -17,17 +18,18 @@ public class ViewPort extends JPanel {
     private JFrame frame;
     private Scene scene;
     private Robot robot;
-    private float resolution = 0.4f;
+    private float resolution = 0.8f;
+    private float fov = 60;
 
-    private boolean cameraCursorMoveFlag = false;
+    private boolean cameraCursorMoveFlag;
 
     //private Vector3 lightPoint = new Vector3(1000f, 2000f, 1000f);
-    private Vector3 lightPoint = new Vector3(0, 0, -10);
+    private Vector3 lightPoint = new Vector3(0, 50, -100);
 
-    private float kA = 0.4f; // коэффициент фонового освещения
-    private Color colorA = new Color(255, 229, 0); // цвет фонового света
+    private float kA = 0.2f; // коэффициент фонового освещения
+    private Color colorA = new Color(255, 255, 255); // цвет фонового света
     private float kS = 1.0f; // коэффициент зеркального освещения
-    private float a = 10; // коэффициент блеска поверхности
+    private float a = 20; // коэффициент блеска поверхности
     private Color colorS = new Color(255, 255, 255); // цвет зеркального света
 
     public ViewPort(JFrame container) {
@@ -124,21 +126,21 @@ public class ViewPort extends JPanel {
 //        scene.addSolid(new Sphere(new Vector3(0, 0, 1), Color.GREEN, 0.4f,0.6f));
 //        scene.addSolid(new Sphere(new Vector3(1, 0, 1), Color.BLUE, 0.4f,0.6f));
 
-        scene.addSolid(new Sphere(new Vector3(-2, 0, 1), Color.RED, 0.4f,0.6f));
-        scene.addSolid(new Sphere(new Vector3(0, 0, 1), Color.GREEN, 0.8f,0.6f));
-        scene.addSolid(new Sphere(new Vector3(2, 0, 1), Color.BLUE, 0.4f,0.6f));
+//        scene.addSolid(new Sphere(new Vector3(-2, 0, 1), Color.RED, 0.4f, 0.5f));
+//        scene.addSolid(new Sphere(new Vector3(0, 0, 1), Color.GREEN, 1.0f, 0.5f));
+//        scene.addSolid(new Sphere(new Vector3(2, 0, 1), Color.BLUE, 0.4f, 0.5f));
 
-//        scene.addSolid(new Sphere(new Vector3(0, 0, 1), Color.RED, 0.4f, 0.5f));
-//        scene.addSolid(new Sphere(new Vector3(0, 0, 5), Color.BLUE, 2f, 0.5f));
-//        scene.addSolid(new Sphere(new Vector3(-1.3f, 0, 1), Color.GREEN, 0.1f, 0.5f));
-
+        scene.addSolid(new Plane(new Vector3(0, -5, 0), Color.CYAN, true, 0.5f));
+        scene.addSolid(new Sphere(new Vector3(0, 0, 1), Color.RED, 0.4f, 0.5f));
+        scene.addSolid(new Sphere(new Vector3(0, 0, 5), Color.BLUE, 2f, 1f));
+        scene.addSolid(new Sphere(new Vector3(-1.3f, 0, 1), Color.GREEN, 0.1f, 0.5f));
 
 
     }
 
     @Override
     public void paint(Graphics g) {
-        g.setColor(Color.BLACK);
+        g.setColor(Color.WHITE);
         g.fillRect(0, 0, getWidth(), getHeight());
 
         int blockSize = (int) (1 / resolution);
@@ -162,7 +164,7 @@ public class ViewPort extends JPanel {
 
                 // Если луч нашёл какой-либо объект
                 if (rayHit != null) {
-                    Color pixelColor = calculatePixelColor(rayHit, 3);
+                    Color pixelColor = calculatePixelColor(rayHit, 5);
                     g.setColor(pixelColor);
                     g.fillRect(x, y, blockSize, blockSize);
 //                    Vector3 toLightVector = Vector3.normalize(lightPoint.subtract(rayHit.getHitPosition()));
@@ -209,11 +211,11 @@ public class ViewPort extends JPanel {
         Vector3 rayDir = rayHit.getRay().getDirection();
         Solid hitSolid = rayHit.getSolid();
         Color hitColor = hitSolid.getColor();
-        float brightness = getDiffuseBrightness(rayHit);
+        float diffuseBrightness = getDiffuseBrightness(rayHit);
         float reflectivity = hitSolid.getReflectivity();
 
-        Color reflection;
-        Vector3 reflectionVector = Vector3.inverse(Vector3.normalize(Vector3.reflect(rayDir, rayHit.getNormal())));
+        Color reflectionColor;
+        Vector3 reflectionVector = Vector3.normalize(Vector3.reflect(rayDir, rayHit.getNormal()));
         Vector3 reflectionRayOrigin = hitPos.add(reflectionVector.multiply(0.001f)); // Чтобы в тот же солид не попасть
         Ray reflectionRay = new Ray(reflectionRayOrigin, reflectionVector);
 
@@ -225,18 +227,27 @@ public class ViewPort extends JPanel {
 
         // Рекурсия !!!
         if (reflectionHit != null) {
-            reflection = calculatePixelColor(reflectionHit, recursionNumber - 1);
+            reflectionColor = calculatePixelColor(reflectionHit, recursionNumber - 1);
         } else {
-            reflection = Color.WHITE;
+            reflectionColor = Color.WHITE;
         }
 
-        Color lerpColor = lerp(hitColor, reflection, reflectivity);
-        return multiplyColor(lerpColor, brightness);
+        Color lerpColor = multiplyColor(lerp(hitColor, reflectionColor, reflectivity), diffuseBrightness);
+        // Color color = addColor(multiplyColor(lerpColor, diffuseBrightness), specularBrightness);
+        Color specularColor = getSpecularColor(rayHit);
+        Color color = new Color((int) ((lerpColor.getRed() + specularColor.getRed() * reflectivity) / 2),
+                (int) ((lerpColor.getGreen() + specularColor.getGreen() * reflectivity) / 2),
+                (int) ((lerpColor.getBlue() + specularColor.getBlue() * reflectivity) / 2));
+        return color;
     }
 
     private Color multiplyColor(Color color, float scalar) {
         scalar = Math.min(1, scalar);
-        return new Color((int)(color.getRed() * scalar), (int)(color.getGreen() * scalar), (int)(color.getBlue() * scalar));
+        return new Color((int) (color.getRed() * scalar), (int) (color.getGreen() * scalar), (int) (color.getBlue() * scalar));
+    }
+
+    private Color addColor(Color color, float scalar) {
+        return new Color(Math.min(1, color.getRed() + scalar), Math.min(1, color.getGreen() + scalar), Math.min(1, color.getBlue() + scalar));
     }
 
     private float lerp(float a, float b, float t) {
@@ -262,4 +273,23 @@ public class ViewPort extends JPanel {
         }
     }
 
+    private Color getSpecularColor(RayHit rayHit) {
+        Vector3 cameraVector = Vector3.normalize(scene.getCamera().getPosition().subtract(rayHit.getHitPosition()));
+        Vector3 lightVector = Vector3.normalize(rayHit.getHitPosition().subtract(lightPoint));
+        Vector3 lightReflectedVector = Vector3.reflect(lightVector, rayHit.getNormal());
+        float specularFactor = Math.max(0, Math.min(1, Vector3.dotProduct(lightReflectedVector, cameraVector)));
+        return new Color((int) (colorS.getRed() * Math.pow(specularFactor, a) * rayHit.getSolid().getReflectivity()),
+                (int) (colorS.getGreen() * Math.pow(specularFactor, a) * rayHit.getSolid().getReflectivity()),
+                (int) (colorS.getBlue() * Math.pow(specularFactor, a) * rayHit.getSolid().getReflectivity()));
+    }
+
+    public void setResolution(float resolution) {
+        this.resolution = resolution;
+        repaint();
+    }
+
+    public void setFOV(int fov){
+        scene.getCamera().setFieldOfVision(fov);
+        repaint();
+    }
 }

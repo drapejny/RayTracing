@@ -90,7 +90,7 @@ public class Vector3 {
         float tempX = normal.x * dot * 2.0f;
         float tempY = normal.y * dot * 2.0f;
         float tempZ = normal.z * dot * 2.0f;
-        Vector3 reflectVector = new Vector3(tempX - vector.x, tempY - vector.y, tempZ - vector.z);
+        Vector3 reflectVector = new Vector3(vector.x - tempX ,   vector.y - tempY,  vector.z - tempZ);
         return reflectVector;
     }
 
