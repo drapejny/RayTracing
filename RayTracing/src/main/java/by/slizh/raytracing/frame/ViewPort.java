@@ -164,7 +164,7 @@ public class ViewPort extends JPanel {
 
                 // Если луч нашёл какой-либо объект
                 if (rayHit != null) {
-                    Color pixelColor = calculatePixelColor(rayHit, 5);
+                    Color pixelColor = calculatePixelColor(rayHit, 10);
                     g.setColor(pixelColor);
                     g.fillRect(x, y, blockSize, blockSize);
 //                    Vector3 toLightVector = Vector3.normalize(lightPoint.subtract(rayHit.getHitPosition()));
@@ -288,8 +288,15 @@ public class ViewPort extends JPanel {
         repaint();
     }
 
-    public void setFOV(int fov){
+    public void setFOV(int fov) {
         scene.getCamera().setFieldOfVision(fov);
+        repaint();
+    }
+
+    public void setLightPoint(int x, int y, int z) {
+        lightPoint.setX(x);
+        lightPoint.setY(y);
+        lightPoint.setZ(z);
         repaint();
     }
 }

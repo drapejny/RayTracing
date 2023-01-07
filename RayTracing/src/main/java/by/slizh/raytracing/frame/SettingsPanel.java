@@ -5,8 +5,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class SettingsPanel extends JPanel {
-    private int selectedSkyboxIndex;
-    private JSpinner spImageWidth, spImageHeight;
 
     public SettingsPanel(ViewPort viewport) {
         // Resolution
@@ -17,11 +15,10 @@ public class SettingsPanel extends JPanel {
         JLabel lbFOV;
         JSlider sdFOV;
 
-        JLabel lbLightHA;
-        JLabel lbLighVA;
-        JSlider sdLightHA, sdLightVA;
-        JLabel lbLightDist;
-        JSlider sdLightDistance;
+        // Light coords
+        JLabel lbLightCoords;
+        JSpinner spLightX, spLightY, spLightZ;
+        JButton btnChangeLight;
 
         GridBagLayout gbPanel0 = new GridBagLayout();
         GridBagConstraints gbc = new GridBagConstraints();
@@ -58,7 +55,7 @@ public class SettingsPanel extends JPanel {
 
         lbFOV = new JLabel("Field of vision");
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 2;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.BOTH;
@@ -74,7 +71,7 @@ public class SettingsPanel extends JPanel {
         sdFOV.setMaximum(120);
         sdFOV.setValue(60);
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 3;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.BOTH;
@@ -84,9 +81,9 @@ public class SettingsPanel extends JPanel {
         gbPanel0.setConstraints(sdFOV, gbc);
         this.add(sdFOV);
 
-        lbLightHA = new JLabel("Light horizontal angle");
+        lbLightCoords = new JLabel("Light coordinates");
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 4;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.BOTH;
@@ -94,85 +91,72 @@ public class SettingsPanel extends JPanel {
         gbc.weighty = 1;
         gbc.anchor = GridBagConstraints.NORTH;
         gbc.insets = new Insets(10, 5, 0, 0);
-        gbPanel0.setConstraints(lbLightHA, gbc);
-        this.add(lbLightHA);
+        gbPanel0.setConstraints(lbLightCoords, gbc);
+        this.add(lbLightCoords);
 
-        sdLightHA = new JSlider();
-        sdLightHA.setMinimum(0);
-        sdLightHA.setMaximum((int) (Math.PI * 200));
-        sdLightHA.setValue(sdLightHA.getMinimum());
+        SpinnerModel spmLightX = new SpinnerNumberModel(0, -1000, 1000, 10);
+        spLightX = new JSpinner(spmLightX);
+        spLightX.setEditor(new JSpinner.NumberEditor(spLightX, "#"));
         gbc.gridx = 0;
-        gbc.gridy = 9;
-        gbc.gridwidth = 2;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1;
-        gbc.weighty = 0;
-        gbc.anchor = GridBagConstraints.NORTH;
-        gbPanel0.setConstraints(sdLightHA, gbc);
-        this.add(sdLightHA);
-
-        lbLighVA = new JLabel("Light vertical angle");
-        gbc.gridx = 0;
-        gbc.gridy = 10;
-        gbc.gridwidth = 2;
+        gbc.gridy = 5;
+        gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.anchor = GridBagConstraints.NORTH;
         gbc.insets = new Insets(0, 5, 0, 0);
-        gbPanel0.setConstraints(lbLighVA, gbc);
-        this.add(lbLighVA);
+        gbPanel0.setConstraints(spLightX, gbc);
+        this.add(spLightX);
 
-
-        sdLightVA = new JSlider();
-        sdLightVA.setMinimum(0);
-        sdLightVA.setMaximum((int) (Math.PI * 200));
-        sdLightVA.setValue(sdLightVA.getMaximum());
-        gbc.gridx = 0;
-        gbc.gridy = 11;
-        gbc.gridwidth = 2;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1;
-        gbc.weighty = 0;
-        gbc.anchor = GridBagConstraints.NORTH;
-        gbPanel0.setConstraints(sdLightVA, gbc);
-        this.add(sdLightVA);
-
-        lbLightDist = new JLabel("Light distance");
-        gbc.gridx = 0;
-        gbc.gridy = 12;
-        gbc.gridwidth = 2;
+        SpinnerModel spmLightY = new SpinnerNumberModel(50, -1000, 1000, 10);
+        spLightY = new JSpinner(spmLightY);
+        spLightY.setEditor(new JSpinner.NumberEditor(spLightY, "#"));
+        gbc.gridx = 1;
+        gbc.gridy = 5;
+        gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.anchor = GridBagConstraints.NORTH;
-        gbc.insets = new Insets(0, 5, 0, 0);
-        gbPanel0.setConstraints(lbLightDist, gbc);
-        this.add(lbLightDist);
+        gbc.insets = new Insets(0, 5, 0, 5);
+        gbPanel0.setConstraints(spLightY, gbc);
+        this.add(spLightY);
 
-        sdLightDistance = new JSlider();
-        sdLightDistance.setMinimum(0);
-        sdLightDistance.setMaximum(200);
-        sdLightDistance.setValue(20);
-        gbc.gridx = 0;
-        gbc.gridy = 13;
-        gbc.gridwidth = 2;
+        SpinnerModel spmLightZ = new SpinnerNumberModel(-100, -1000, 1000, 10);
+        spLightZ = new JSpinner(spmLightZ);
+        spLightZ.setEditor(new JSpinner.NumberEditor(spLightZ, "#"));
+        gbc.gridx = 2;
+        gbc.gridy = 5;
+        gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
-        gbc.weighty = 0;
+        gbc.weighty = 1;
         gbc.anchor = GridBagConstraints.NORTH;
-        gbPanel0.setConstraints(sdLightDistance, gbc);
-        this.add(sdLightDistance);
+        gbc.insets = new Insets(0, 5, 0, 5);
+        gbPanel0.setConstraints(spLightZ, gbc);
+        this.add(spLightZ);
+
+        btnChangeLight = new JButton("Change light");
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbPanel0.setConstraints(btnChangeLight, gbc);
+        this.add(btnChangeLight);
 
         sdViewportResolution.addChangeListener(e -> viewport.setResolution(sdViewportResolution.getValue() / 100f));
 
         sdFOV.addChangeListener(e -> viewport.setFOV(sdFOV.getValue()));
 
+        btnChangeLight.addActionListener(e -> viewport.setLightPoint((int) spLightX.getValue(), (int) spLightY.getValue(), (int) spLightZ.getValue()));
 
     }
 }
