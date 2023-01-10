@@ -5,6 +5,7 @@ import by.slizh.raytracing.math.Ray;
 import by.slizh.raytracing.math.Vector3;
 
 import java.awt.*;
+import java.util.Objects;
 
 public class Sphere extends Solid {
 
@@ -43,21 +44,27 @@ public class Sphere extends Solid {
         return normal;
     }
 
-//    public Vector3 test(Ray ray) {
-//        float t = Vector3.dotProduct(position.subtract(ray.getOrigin()), ray.getDirection());
-//        Vector3 p = ray.getOrigin().add(ray.getDirection().multiply(t));
-//
-//        float y = position.subtract(p).length();
-//        if (y < radius) {
-//            float x = (float) Math.sqrt(radius * radius - y * y);
-//            float t1 = t - x;
-//            if (t1 > 0) {
-//                return ray.getOrigin().add(ray.getDirection().multiply(t1));
-//            }
-//            else {
-//                return null;}
-//        } else {
-//            return null;
-//        }
-//    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Sphere sphere)) return false;
+        if (!super.equals(o)) return false;
+        return Float.compare(sphere.radius, radius) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Sphere{" +
+                "radius=" + radius +
+                ", position=" + position +
+                ", color=" + color +
+                ", reflectivity=" + reflectivity +
+                '}';
+    }
 }

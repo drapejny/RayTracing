@@ -16,12 +16,16 @@ import java.awt.event.*;
 
 public class ViewPort extends JPanel {
     private JFrame frame;
+    private SettingsPanel settingsPanel;
     private Scene scene;
     private Robot robot;
     private float resolution = 0.8f;
     private float fov = 60;
 
     private boolean cameraCursorMoveFlag;
+
+    private boolean solidPickFlag;
+    private Solid pickedSolid;
 
     //private Vector3 lightPoint = new Vector3(1000f, 2000f, 1000f);
     private Vector3 lightPoint = new Vector3(0, 50, -100);
@@ -31,6 +35,8 @@ public class ViewPort extends JPanel {
     private float kS = 1.0f; // коэффициент зеркального освещения
     private float a = 20; // коэффициент блеска поверхности
     private Color colorS = new Color(255, 255, 255); // цвет зеркального света
+
+    private int RECURSION_NUMBER = 10;
 
     public ViewPort(JFrame container) {
         setFocusable(true);
@@ -53,21 +59,21 @@ public class ViewPort extends JPanel {
 
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_D ->
-                            camera.setPosition(camera.getPosition().add(new Vector3(0.05f, 0.0f, 0.0f).rotate(pitch, yaw)));
+                            camera.setPosition(camera.getPosition().add(new Vector3(0.08f, 0.0f, 0.0f).rotate(pitch, yaw)));
                     case KeyEvent.VK_A ->
-                            camera.setPosition(camera.getPosition().add(new Vector3(-0.05f, 0.0f, 0.0f).rotate(pitch, yaw)));
+                            camera.setPosition(camera.getPosition().add(new Vector3(-0.08f, 0.0f, 0.0f).rotate(pitch, yaw)));
                     case KeyEvent.VK_W -> {
-                        Vector3 moveVector = new Vector3(0.0f, 0.0f, 0.05f).rotate(pitch, yaw);
+                        Vector3 moveVector = new Vector3(0.0f, 0.0f, 0.08f).rotate(pitch, yaw);
                         moveVector.setY(0.0f);
                         camera.setPosition(camera.getPosition().add(moveVector));
                     }
                     case KeyEvent.VK_S -> {
-                        Vector3 moveVector = new Vector3(0.0f, 0.0f, -0.05f).rotate(pitch, yaw);
+                        Vector3 moveVector = new Vector3(0.0f, 0.0f, -0.08f).rotate(pitch, yaw);
                         moveVector.setY(0.0f);
                         camera.setPosition(camera.getPosition().add(moveVector));
                     }
-                    case KeyEvent.VK_E -> camera.setPosition(camera.getPosition().add(new Vector3(0.0f, 0.2f, 0.0f)));
-                    case KeyEvent.VK_Q -> camera.setPosition(camera.getPosition().add(new Vector3(0.0f, -0.2f, 0.0f)));
+                    case KeyEvent.VK_E -> camera.setPosition(camera.getPosition().add(new Vector3(0.0f, 0.3f, 0.0f)));
+                    case KeyEvent.VK_Q -> camera.setPosition(camera.getPosition().add(new Vector3(0.0f, -0.3f, 0.0f)));
                 }
 
                 repaint();
@@ -81,7 +87,7 @@ public class ViewPort extends JPanel {
                 if (cameraCursorMoveFlag) {
 
                     // Coefficient to convert integer mouse movements to radians
-                    final float TO_RADIANS_COEF = (float) Math.PI / 5000;
+                    final float TO_RADIANS_COEF = (float) Math.PI / 4000;
 
                     int centerX = frame.getX() + frame.getWidth() / 2;
                     int centerY = frame.getY() + frame.getHeight() / 2;
@@ -90,16 +96,12 @@ public class ViewPort extends JPanel {
                     int mouseYOffset = e.getYOnScreen() - centerY;
 
                     if (mouseXOffset != 0 || mouseYOffset != 0) {
-                        //System.out.println(mouseXOffset);
-                        //System.out.println(mouseYOffset);
-
                         Camera camera = scene.getCamera();
                         camera.setPitch(Math.min((float) Math.PI / 2,
                                 Math.max((float) (-Math.PI / 2), camera.getPitch() + mouseYOffset * TO_RADIANS_COEF)));
                         camera.setYaw(camera.getYaw() + mouseXOffset * TO_RADIANS_COEF);
-                        //camera.setPitch(Math.min(90, Math.max(-90, camera.getPitch() + mouseYOffset)));
-                        //camera.setYaw(camera.getYaw() + mouseXOffset);
                         repaint();
+
                         // Move mouse to the center
                         robot.mouseMove(centerX, centerY);
                     }
@@ -109,31 +111,69 @@ public class ViewPort extends JPanel {
             }
         });
 
-        // Enable / Disable camera mouse movement
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                cameraCursorMoveFlag = !cameraCursorMoveFlag;
+                // Left click
+                if (SwingUtilities.isLeftMouseButton(e)) {
+                    cameraCursorMoveFlag = !cameraCursorMoveFlag;
+                }
+                // Right click
+                else {
+                    int x = e.getX();
+                    int y = e.getY();
+                    float u;
+                    float v;
+                    if (getWidth() > getHeight()) {
+                        u = (float) (x - getWidth() / 2 + getHeight() / 2) / getHeight() * 2 - 1;
+                        v = -((float) y / getHeight() * 2 - 1);
+                    } else {
+                        u = (float) x / getWidth() * 2 - 1;
+                        v = -((float) y - getHeight() / 2 + getWidth() / 2) / getWidth() * 2 - 1;
+                    }
+                    Camera camera = scene.getCamera();
+                    float z = (float) (1 / Math.tan(camera.getFieldOfVision() / 2));
+                    Vector3 rayDir = new Vector3(u, v, z).rotate(camera.getPitch(), camera.getYaw());
+                    Ray ray = new Ray(camera.getPosition().subtract(new Vector3(0, 0, z)), rayDir);
+                    RayHit rayHit = scene.calculateRayHit(ray);
+
+                    // Picking solid
+                    if (rayHit != null) {
+                        if (pickedSolid == null) {
+                            pickedSolid = rayHit.getSolid();
+                            // Двигаем слайдеры на панели настроек
+                            settingsPanel.sdReflectivity.setValue((int) (pickedSolid.getReflectivity() * 100));
+                            settingsPanel.sdRed.setValue(pickedSolid.getColor().getRed());
+                            settingsPanel.sdGreen.setValue(pickedSolid.getColor().getGreen());
+                            settingsPanel.sdBlue.setValue(pickedSolid.getColor().getBlue());
+                        } else {
+                            if (pickedSolid.equals(rayHit.getSolid())) {
+                                pickedSolid = null;
+                                // Двигаем слайдеры на панели настроек
+                                settingsPanel.sdReflectivity.setValue(0);
+                                settingsPanel.sdRed.setValue(1);
+                                settingsPanel.sdGreen.setValue(1);
+                                settingsPanel.sdBlue.setValue(1);
+                            } else {
+                                pickedSolid = rayHit.getSolid();
+                            }
+                        }
+                        repaint();
+                    }
+                }
             }
         });
 
         frame = container;
-        scene = new
+        scene = new Scene();
 
-                Scene();
-
-//        scene.addSolid(new Sphere(new Vector3(-1, 0, 1), Color.RED, 0.4f,0.6f));
-//        scene.addSolid(new Sphere(new Vector3(0, 0, 1), Color.GREEN, 0.4f,0.6f));
-//        scene.addSolid(new Sphere(new Vector3(1, 0, 1), Color.BLUE, 0.4f,0.6f));
-
-//        scene.addSolid(new Sphere(new Vector3(-2, 0, 1), Color.RED, 0.4f, 0.5f));
-//        scene.addSolid(new Sphere(new Vector3(0, 0, 1), Color.GREEN, 1.0f, 0.5f));
-//        scene.addSolid(new Sphere(new Vector3(2, 0, 1), Color.BLUE, 0.4f, 0.5f));
-
-        scene.addSolid(new Plane(new Vector3(0, -5, 0), Color.CYAN, true, 0.5f));
+        //scene.addSolid(new Plane(new Vector3(0, -5, 0), Color.CYAN, true, 0.5f));
         scene.addSolid(new Sphere(new Vector3(0, 0, 1), Color.RED, 0.4f, 0.5f));
-        scene.addSolid(new Sphere(new Vector3(0, 0, 5), Color.BLUE, 2f, 1f));
+        scene.addSolid(new Sphere(new Vector3(1, 0, 1), Color.BLUE, 0.4f, 0.1f));
+        scene.addSolid(new Sphere(new Vector3(0, 0, 5), Color.PINK, 2f, 1f));
         scene.addSolid(new Sphere(new Vector3(-1.3f, 0, 1), Color.GREEN, 0.1f, 0.5f));
+        scene.addSolid(new Sphere(new Vector3(2,2,2),Color.CYAN,0.3f,0.5f));
+        scene.addSolid(new Sphere(new Vector3(0, 0, 8), Color.YELLOW, 0.5f, 0.5f));
 
 
     }
@@ -147,26 +187,42 @@ public class ViewPort extends JPanel {
 
         for (int x = 0; x < getWidth(); x += blockSize) {
             for (int y = 0; y < getHeight(); y += blockSize) {
-                float u;
-                float v;
-                if (getWidth() > getHeight()) {
-                    u = (float) (x - getWidth() / 2 + getHeight() / 2) / getHeight() * 2 - 1;
-                    v = -((float) y / getHeight() * 2 - 1);
-                } else {
-                    u = (float) x / getWidth() * 2 - 1;
-                    v = -((float) y - getHeight() / 2 + getWidth() / 2) / getWidth() * 2 - 1;
-                }
-                Vector3 eyePos = new Vector3(0, 0, (float) (-1 / Math.tan(Math.toRadians(scene.getCamera().getFieldOfVision() / 2))));
-                Camera camera = scene.getCamera();
-                Vector3 rayDir = new Vector3(u, v, 0).subtract(eyePos).rotate(camera.getPitch(), camera.getYaw());
-                Ray ray = new Ray(eyePos.add(camera.getPosition()), rayDir);
-                RayHit rayHit = scene.calculateRayHit(ray);
+
+                RayHit rayHit = findRayHit(x, y);
 
                 // Если луч нашёл какой-либо объект
                 if (rayHit != null) {
-                    Color pixelColor = calculatePixelColor(rayHit, 10);
-                    g.setColor(pixelColor);
-                    g.fillRect(x, y, blockSize, blockSize);
+                    // Если пикнут солид, то обводим его желтым
+                    if (rayHit.getSolid().equals(pickedSolid)) {
+                        // Алгоритм обводки желтым
+                        if (x > 0 && x < getWidth() - 1 && y > 0 && y < getHeight() - 1) {
+                            boolean stopFlag = false;
+                            for (int i = x - 1; i <= x + 1; i++) {
+                                if (stopFlag) {
+                                    break;
+                                }
+                                for (int j = y - 1; j <= y + 1; j++) {
+                                    RayHit nearByHit = findRayHit(i, j);
+                                    if (nearByHit == null || !nearByHit.getSolid().equals(pickedSolid)) {
+                                        stopFlag = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            Color pixelColor;
+                            if (stopFlag) {
+                                pixelColor = Color.YELLOW;
+                            } else {
+                                pixelColor = calculatePixelColor(rayHit, RECURSION_NUMBER);
+                            }
+                            g.setColor(pixelColor);
+                            g.fillRect(x, y, blockSize, blockSize);
+                        }
+                    } else {
+                        Color pixelColor = calculatePixelColor(rayHit, RECURSION_NUMBER);
+                        g.setColor(pixelColor);
+                        g.fillRect(x, y, blockSize, blockSize);
+                    }
 //                    Vector3 toLightVector = Vector3.normalize(lightPoint.subtract(rayHit.getHitPosition()));
 //                    Ray toLightRay = new Ray(rayHit.getHitPosition(), toLightVector);
 //
@@ -206,6 +262,25 @@ public class ViewPort extends JPanel {
         }
     }
 
+    private RayHit findRayHit(int x, int y) {
+        float u;
+        float v;
+        if (getWidth() > getHeight()) {
+            u = (float) (x - getWidth() / 2 + getHeight() / 2) / getHeight() * 2 - 1;
+            v = -((float) y / getHeight() * 2 - 1);
+        } else {
+            u = (float) x / getWidth() * 2 - 1;
+            v = -((float) y - getHeight() / 2 + getWidth() / 2) / getWidth() * 2 - 1;
+        }
+
+        Camera camera = scene.getCamera();
+        float z = (float) (1 / Math.tan(camera.getFieldOfVision() / 2));
+        Vector3 rayDir = new Vector3(u, v, z).rotate(camera.getPitch(), camera.getYaw());
+        Ray ray = new Ray(camera.getPosition().subtract(new Vector3(0, 0, z)), rayDir);
+
+        return scene.calculateRayHit(ray);
+    }
+
     public Color calculatePixelColor(RayHit rayHit, int recursionNumber) {
         Vector3 hitPos = rayHit.getHitPosition();
         Vector3 rayDir = rayHit.getRay().getDirection();
@@ -232,12 +307,13 @@ public class ViewPort extends JPanel {
             reflectionColor = Color.WHITE;
         }
 
-        Color lerpColor = multiplyColor(lerp(hitColor, reflectionColor, reflectivity), diffuseBrightness);
-        // Color color = addColor(multiplyColor(lerpColor, diffuseBrightness), specularBrightness);
-        Color specularColor = getSpecularColor(rayHit);
-        Color color = new Color((int) ((lerpColor.getRed() + specularColor.getRed() * reflectivity) / 2),
-                (int) ((lerpColor.getGreen() + specularColor.getGreen() * reflectivity) / 2),
-                (int) ((lerpColor.getBlue() + specularColor.getBlue() * reflectivity) / 2));
+        Color color = multiplyColor(calcColor(hitColor, reflectionColor, reflectivity), diffuseBrightness);
+
+//        Color specularColor = getSpecularColor(rayHit);
+//        color = new Color((int) ((color.getRed() + specularColor.getRed() * reflectivity) / 2),
+//                (int) ((color.getGreen() + specularColor.getGreen() * reflectivity) / 2),
+//                (int) ((color.getBlue() + specularColor.getBlue() * reflectivity) / 2));
+
         return color;
     }
 
@@ -246,16 +322,12 @@ public class ViewPort extends JPanel {
         return new Color((int) (color.getRed() * scalar), (int) (color.getGreen() * scalar), (int) (color.getBlue() * scalar));
     }
 
-    private Color addColor(Color color, float scalar) {
-        return new Color(Math.min(1, color.getRed() + scalar), Math.min(1, color.getGreen() + scalar), Math.min(1, color.getBlue() + scalar));
-    }
-
-    private float lerp(float a, float b, float t) {
+    private float calcColor(float a, float b, float t) {
         return a + t * (b - a);
     }
 
-    public Color lerp(Color a, Color b, float t) {
-        return new Color((int) lerp(a.getRed(), b.getRed(), t), (int) lerp(a.getGreen(), b.getGreen(), t), (int) lerp(a.getBlue(), b.getBlue(), t));
+    public Color calcColor(Color a, Color b, float t) {
+        return new Color((int) calcColor(a.getRed(), b.getRed(), t), (int) calcColor(a.getGreen(), b.getGreen(), t), (int) calcColor(a.getBlue(), b.getBlue(), t));
     }
 
     private float getDiffuseBrightness(RayHit rayHit) {
@@ -289,7 +361,7 @@ public class ViewPort extends JPanel {
     }
 
     public void setFOV(int fov) {
-        scene.getCamera().setFieldOfVision(fov);
+        scene.getCamera().setFieldOfVision((float) Math.toRadians(fov));
         repaint();
     }
 
@@ -298,5 +370,40 @@ public class ViewPort extends JPanel {
         lightPoint.setY(y);
         lightPoint.setZ(z);
         repaint();
+    }
+
+    public void setReflectivity(float reflectivity) {
+        if (pickedSolid != null) {
+            pickedSolid.setReflectivity(reflectivity);
+            repaint();
+        }
+    }
+
+    public void setRed(int red) {
+        if (pickedSolid != null) {
+            Color color = pickedSolid.getColor();
+            pickedSolid.setColor(new Color(red, color.getGreen(), color.getBlue()));
+            repaint();
+        }
+    }
+
+    public void setGreen(int green) {
+        if (pickedSolid != null) {
+            Color color = pickedSolid.getColor();
+            pickedSolid.setColor(new Color(color.getRed(), green, color.getBlue()));
+            repaint();
+        }
+    }
+
+    public void setBlue(int blue) {
+        if (pickedSolid != null) {
+            Color color = pickedSolid.getColor();
+            pickedSolid.setColor(new Color(color.getRed(), color.getGreen(), blue));
+            repaint();
+        }
+    }
+
+    public void setSettingsPanel(SettingsPanel settingsPanel) {
+        this.settingsPanel = settingsPanel;
     }
 }

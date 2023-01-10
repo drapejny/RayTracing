@@ -24,5 +24,7 @@ public class Main {
         settingsDialog.add(settingsPanel);
         settingsDialog.setVisible(true);
 
+        viewPort.setSettingsPanel(settingsPanel);
+
     }
 }

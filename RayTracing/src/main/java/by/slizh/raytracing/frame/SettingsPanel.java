@@ -6,20 +6,30 @@ import java.awt.*;
 
 public class SettingsPanel extends JPanel {
 
+    // Resolution
+    JLabel lbViewportResolution;
+    JSlider sdViewportResolution;
+
+    // Field of view
+    JLabel lbFOV;
+    JSlider sdFOV;
+
+    // Light coords
+    JLabel lbLightCoords;
+    JSpinner spLightX, spLightY, spLightZ;
+    JButton btnChangeLight;
+
+    // Solid info
+    JLabel lbReflectivity;
+    JSlider sdReflectivity;
+    JLabel lbRed;
+    JSlider sdRed;
+    JLabel lbGreen;
+    JSlider sdGreen;
+    JLabel lbBlue;
+    JSlider sdBlue;
+
     public SettingsPanel(ViewPort viewport) {
-        // Resolution
-        JLabel lbViewportResolution;
-        JSlider sdViewportResolution;
-
-        // Field of view
-        JLabel lbFOV;
-        JSlider sdFOV;
-
-        // Light coords
-        JLabel lbLightCoords;
-        JSpinner spLightX, spLightY, spLightZ;
-        JButton btnChangeLight;
-
         GridBagLayout gbPanel0 = new GridBagLayout();
         GridBagConstraints gbc = new GridBagConstraints();
         this.setLayout(gbPanel0);
@@ -152,11 +162,130 @@ public class SettingsPanel extends JPanel {
         gbPanel0.setConstraints(btnChangeLight, gbc);
         this.add(btnChangeLight);
 
+        lbReflectivity = new JLabel("Solid Reflectivity");
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.insets = new Insets(0, 5, 0, 0);
+        gbPanel0.setConstraints(lbReflectivity, gbc);
+        this.add(lbReflectivity);
+
+        sdReflectivity = new JSlider();
+        sdReflectivity.setMinimum(0);
+        sdReflectivity.setMaximum(100);
+        sdReflectivity.setValue(0);
+        gbc.gridx = 0;
+        gbc.gridy = 8;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbPanel0.setConstraints(sdReflectivity, gbc);
+        this.add(sdReflectivity);
+
+        lbRed = new JLabel("Solid Red");
+        gbc.gridx = 0;
+        gbc.gridy = 9;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.insets = new Insets(0, 5, 0, 0);
+        gbPanel0.setConstraints(lbRed, gbc);
+        this.add(lbRed);
+
+        sdRed = new JSlider();
+        sdRed.setMinimum(1);
+        sdRed.setMaximum(255);
+        sdRed.setValue(1);
+        gbc.gridx = 0;
+        gbc.gridy = 10;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbPanel0.setConstraints(sdRed, gbc);
+        this.add(sdRed);
+
+        lbGreen = new JLabel("Solid Green");
+        gbc.gridx = 0;
+        gbc.gridy = 11;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.insets = new Insets(0, 5, 0, 0);
+        gbPanel0.setConstraints(lbGreen, gbc);
+        this.add(lbGreen);
+
+        sdGreen = new JSlider();
+        sdGreen.setMinimum(1);
+        sdGreen.setMaximum(255);
+        sdGreen.setValue(1);
+        gbc.gridx = 0;
+        gbc.gridy = 12;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbPanel0.setConstraints(sdGreen, gbc);
+        this.add(sdGreen);
+
+        lbBlue = new JLabel("Solid Blue");
+        gbc.gridx = 0;
+        gbc.gridy = 13;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.insets = new Insets(0, 5, 0, 0);
+        gbPanel0.setConstraints(lbBlue, gbc);
+        this.add(lbBlue);
+
+        sdBlue = new JSlider();
+        sdBlue.setMinimum(1);
+        sdBlue.setMaximum(255);
+        sdBlue.setValue(1);
+        gbc.gridx = 0;
+        gbc.gridy = 14;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbPanel0.setConstraints(sdBlue, gbc);
+        this.add(sdBlue);
+
         sdViewportResolution.addChangeListener(e -> viewport.setResolution(sdViewportResolution.getValue() / 100f));
 
         sdFOV.addChangeListener(e -> viewport.setFOV(sdFOV.getValue()));
 
         btnChangeLight.addActionListener(e -> viewport.setLightPoint((int) spLightX.getValue(), (int) spLightY.getValue(), (int) spLightZ.getValue()));
 
+        sdReflectivity.addChangeListener(e -> viewport.setReflectivity(sdReflectivity.getValue() / 100.f));
+
+        sdRed.addChangeListener(e -> viewport.setRed(sdRed.getValue()));
+
+        sdGreen.addChangeListener(e -> viewport.setGreen(sdGreen.getValue()));
+
+        sdBlue.addChangeListener(e -> viewport.setBlue(sdBlue.getValue()));
     }
 }

@@ -17,7 +17,7 @@ public class Plane extends Solid {
     @Override
     public Vector3 calculateIntersection(Ray ray) {
         float t = -(ray.getOrigin().getY() - position.getY()) / ray.getDirection().getY();
-        if (t > 0 && Float.isFinite(t)) {
+        if (t > -0.0 && Float.isFinite(t)) {
             return ray.getOrigin().add(ray.getDirection().multiply(t));
         }
 
